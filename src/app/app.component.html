@@ -1,0 +1,432 @@
+<ng-container *ngIf="!autenticado; else panelPrincipal">
+  <main class="login-contenedor">
+    <section class="login-tarjeta">
+      <p class="subtitulo">SMART HOME / ACCESO</p>
+      <h1>Iniciar sesión</h1>
+      <p class="descripcion">
+        Ingresa tus credenciales para acceder al panel de control.
+      </p>
+
+      <form class="login-formulario" (ngSubmit)="iniciarSesion()">
+        <div class="campo">
+          <label for="usuario">Usuario</label>
+          <input
+            id="usuario"
+            name="usuario"
+            type="text"
+            [(ngModel)]="nombreUsuario"
+            autocomplete="username"
+            placeholder="Tu usuario"
+            required
+            [disabled]="cargandoLogin">
+        </div>
+
+        <div class="campo">
+          <label for="contrasena">Contraseña</label>
+          <input
+            id="contrasena"
+            name="contrasena"
+            type="password"
+            [(ngModel)]="contrasena"
+            autocomplete="current-password"
+            placeholder="Tu contraseña"
+            required
+            [disabled]="cargandoLogin">
+        </div>
+
+        <p *ngIf="errorLogin" class="error" role="alert">
+          {{ errorLogin }}
+        </p>
+
+        <button
+          class="boton login-boton"
+          type="submit"
+          [disabled]="cargandoLogin">
+          {{ cargandoLogin ? 'Validando...' : 'Entrar' }}
+        </button>
+      </form>
+
+      <p class="login-pie">
+        Smart Home · Acceso al sistema
+      </p>
+    </section>
+  </main>
+</ng-container>
+
+<ng-template #panelPrincipal>
+  <main class="contenedor">
+    <header class="encabezado">
+      <div>
+        <p class="subtitulo">SMART HOME / MONITOREO</p>
+        <h1>Panel de control</h1>
+        <p class="descripcion">
+          Administra dispositivos y consulta la comunicación con la API REST.
+        </p>
+      </div>
+
+      <div class="sesion-usuario">
+        <span>Sesión: <strong>{{ usuarioActual }}</strong></span>
+        <button
+          class="boton boton-secundario"
+          type="button"
+          (click)="cerrarSesion()">
+          Cerrar sesión
+        </button>
+      </div>
+
+      <span
+        class="etiqueta-api"
+        [ngClass]="'etiqueta-' + estadoApi">
+        <span class="punto-estado"></span>
+        {{
+          estadoApi === 'disponible'
+            ? 'API disponible'
+            : estadoApi === 'error'
+              ? 'Error de conexión'
+              : estadoApi === 'verificando'
+                ? 'Verificando API'
+                : 'API sin verificar'
+        }}
+      </span>
+    </header>
+
+    <!-- Diagnóstico de conexión -->
+    <section class="panel">
+      <div class="titulo-seccion">
+        <div>
+          <p class="eyebrow">OBSERVABILIDAD</p>
+          <h2>Conexión con la API</h2>
+          <p class="descripcion">
+            Comprobación HTTP del endpoint de dispositivos.
+          </p>
+        </div>
+
+        <button
+          class="boton"
+          type="button"
+          (click)="verificarConexion()"
+          [disabled]="estadoApi === 'verificando'">
+          {{
+            estadoApi === 'verificando'
+              ? 'Comprobando...'
+              : 'Verificar conexión'
+          }}
+        </button>
+      </div>
+
+      <div
+        class="resumen-conexion"
+        [ngClass]="'resumen-' + estadoApi">
+
+        <div class="icono-conexion" aria-hidden="true">
+          <span *ngIf="estadoApi === 'disponible'">✓</span>
+          <span *ngIf="estadoApi === 'error'">!</span>
+          <span *ngIf="estadoApi === 'verificando'">…</span>
+          <span *ngIf="estadoApi === 'sin-verificar'">?</span>
+        </div>
+
+        <div class="resumen-texto">
+          <strong>
+            {{
+              estadoApi === 'disponible'
+                ? 'La API respondió correctamente'
+                : estadoApi === 'error'
+                  ? 'No se completó la petición'
+                  : estadoApi === 'verificando'
+                    ? 'Esperando respuesta del servidor'
+                    : 'Todavía no hay comprobación'
+            }}
+          </strong>
+
+          <span>
+            {{
+              estadoApi === 'disponible'
+                ? 'La última petición recibió una respuesta HTTP exitosa.'
+                : estadoApi === 'error'
+                  ? 'Consulta el tipo de error, el origen probable y las recomendaciones.'
+                  : estadoApi === 'verificando'
+                    ? 'Se está consultando el endpoint configurado.'
+                    : 'Pulsa "Verificar conexión" para consultar la API.'
+            }}
+          </span>
+        </div>
+      </div>
+
+      <ng-container *ngIf="diagnostico as d">
+        <div class="metricas">
+          <div class="metrica">
+            <span class="metrica-label">Código HTTP</span>
+            <strong [class.texto-error]="d.estado === 'error'">
+              {{ d.codigoHttp === null ? 'Sin respuesta' : d.codigoHttp }}
+            </strong>
+          </div>
+
+          <div class="metrica">
+            <span class="metrica-label">Duración</span>
+            <strong>{{ d.duracionMs }} ms</strong>
+          </div>
+
+          <div class="metrica">
+            <span class="metrica-label">Método</span>
+            <strong>{{ d.metodo }}</strong>
+          </div>
+
+          <div class="metrica">
+            <span class="metrica-label">Última comprobación</span>
+            <strong>{{ d.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</strong>
+          </div>
+        </div>
+
+        <div class="detalle-api">
+          <div class="detalle-fila">
+            <span>Endpoint</span>
+            <code>{{ d.url }}</code>
+          </div>
+
+          <div class="detalle-fila">
+            <span>Resultado</span>
+            <strong>{{ d.tipo }}</strong>
+          </div>
+
+          <div class="detalle-fila">
+            <span>Origen probable</span>
+            <span>{{ d.origen }}</span>
+          </div>
+
+          <p class="mensaje-diagnostico">{{ d.mensaje }}</p>
+
+          <div
+            class="bloque-diagnostico"
+            *ngIf="d.causas.length">
+            <h3>Posibles causas</h3>
+            <ul>
+              <li *ngFor="let causa of d.causas">
+                {{ causa }}
+              </li>
+            </ul>
+          </div>
+
+          <div
+            class="bloque-diagnostico recomendaciones"
+            *ngIf="d.recomendaciones.length">
+            <h3>Qué comprobar</h3>
+            <ul>
+              <li *ngFor="let recomendacion of d.recomendaciones">
+                {{ recomendacion }}
+              </li>
+            </ul>
+          </div>
+
+          <details class="detalle-tecnico">
+            <summary>Detalle técnico</summary>
+            <pre>{{ d.detalleTecnico }}</pre>
+          </details>
+        </div>
+      </ng-container>
+
+      <p class="nota-diagnostico">
+        Nota: el estado 0 no distingue por sí solo entre CORS,
+        servidor inaccesible, DNS o bloqueo del navegador.
+        Revisa también la consola y la pestaña Network.
+      </p>
+    </section>
+
+    <!-- Registrar dispositivos -->
+    <section class="panel">
+      <div class="titulo-seccion">
+        <div>
+          <p class="eyebrow">DISPOSITIVOS</p>
+          <h2>Registrar dispositivo</h2>
+          <p class="descripcion">
+            Añade un dispositivo a la API actual.
+          </p>
+        </div>
+      </div>
+
+      <form (ngSubmit)="crear()">
+        <div class="campo">
+          <label for="nombre">Nombre del dispositivo</label>
+          <input
+            id="nombre"
+            name="nombre"
+            type="text"
+            [(ngModel)]="nombre"
+            placeholder="Ej. LED sala"
+            maxlength="80"
+            required>
+        </div>
+
+        <div class="campo">
+          <label for="estado">Estado inicial</label>
+          <select id="estado" name="estado" [(ngModel)]="estado">
+            <option value="APAGADO">Apagado</option>
+            <option value="ENCENDIDO">Encendido</option>
+          </select>
+        </div>
+
+        <button
+          class="boton"
+          type="submit"
+          [disabled]="guardando">
+          {{ guardando ? 'Guardando...' : 'Registrar dispositivo' }}
+        </button>
+      </form>
+
+      <p *ngIf="mensaje" class="mensaje" role="status">
+        {{ mensaje }}
+      </p>
+
+      <p *ngIf="error" class="error" role="alert">
+        {{ error }}
+      </p>
+    </section>
+
+    <!-- Lista de dispositivos -->
+    <section class="panel">
+      <div class="titulo-seccion">
+        <div>
+          <p class="eyebrow">INVENTARIO</p>
+          <h2>Mis dispositivos</h2>
+          <p class="descripcion">
+            Datos devueltos por la API de Spring Boot.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="boton boton-secundario"
+          (click)="listar()"
+          [disabled]="cargando">
+          {{ cargando ? 'Actualizando...' : 'Actualizar lista' }}
+        </button>
+      </div>
+
+      <p *ngIf="cargando" class="estado-carga">
+        Cargando dispositivos...
+      </p>
+
+      <div
+        *ngIf="!cargando && dispositivos.length === 0 && estadoApi !== 'error'"
+        class="vacio">
+        <strong>No hay dispositivos registrados</strong>
+        <span>Cuando registres uno, aparecerá aquí.</span>
+      </div>
+
+      <div
+        *ngIf="!cargando && dispositivos.length === 0 && estadoApi === 'error'"
+        class="vacio vacio-error">
+        No se puede confirmar el inventario porque la última petición falló.
+        Revisa el diagnóstico.
+      </div>
+
+      <article
+        class="dispositivo"
+        *ngFor="let dispositivo of dispositivos; trackBy: trackById">
+
+        <div class="informacion">
+          <h3>{{ dispositivo.nombre }}</h3>
+          <p class="identificador">ID: {{ dispositivo.id }}</p>
+
+          <span
+            class="estado"
+            [class.encendido]="dispositivo.estado === 'ENCENDIDO'">
+            {{ dispositivo.estado }}
+          </span>
+        </div>
+
+        <div class="acciones">
+          <button
+            type="button"
+            class="boton"
+            (click)="cambiarEstado(dispositivo)"
+            [disabled]="operacionEnCurso">
+            {{
+              dispositivo.estado === 'ENCENDIDO'
+                ? 'Apagar'
+                : 'Encender'
+            }}
+          </button>
+
+          <button
+            type="button"
+            class="boton boton-peligro"
+            (click)="eliminar(dispositivo.id)"
+            [disabled]="operacionEnCurso">
+            Eliminar
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <!-- Historial -->
+    <section class="panel">
+      <div class="titulo-seccion">
+        <div>
+          <p class="eyebrow">REGISTRO LOCAL</p>
+          <h2>Historial de diagnóstico</h2>
+          <p class="descripcion">
+            Últimas 10 peticiones de esta sesión del navegador.
+          </p>
+        </div>
+
+        <div class="acciones-historial">
+          <button
+            type="button"
+            class="boton boton-secundario"
+            (click)="alternarHistorial()">
+            {{ mostrandoHistorial ? 'Ocultar' : 'Ver historial' }}
+          </button>
+
+          <button
+            type="button"
+            class="boton boton-secundario"
+            (click)="limpiarHistorial()"
+            [disabled]="historialDiagnostico.length === 0">
+            Limpiar
+          </button>
+        </div>
+      </div>
+
+      <p
+        *ngIf="historialDiagnostico.length === 0"
+        class="vacio">
+        Todavía no hay peticiones registradas.
+      </p>
+
+      <div class="historial" *ngIf="mostrandoHistorial">
+        <article
+          class="evento-historial"
+          *ngFor="let evento of historialDiagnostico">
+
+          <span
+            class="estado-historial"
+            [class.estado-historial-error]="evento.estado === 'error'">
+            {{ evento.estado === 'disponible' ? 'OK' : 'ERROR' }}
+          </span>
+
+          <div class="evento-contenido">
+            <strong>{{ evento.tipo }}</strong>
+
+            <span>
+              {{ evento.fecha | date:'dd/MM/yyyy HH:mm:ss' }}
+              · {{ evento.metodo }}
+              · {{
+                evento.codigoHttp === null
+                  ? 'Sin HTTP'
+                  : 'HTTP ' + evento.codigoHttp
+              }}
+              · {{ evento.duracionMs }} ms
+            </span>
+
+            <code>{{ evento.url }}</code>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <footer class="pie">
+      Smart Home · Diagnóstico del cliente HTTP ·
+      El historial se conserva solo durante esta sesión.
+    </footer>
+  </main>
+</ng-template>

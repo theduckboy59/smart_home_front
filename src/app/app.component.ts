@@ -64,7 +64,7 @@ export class AppComponent implements OnInit, OnDestroy {
   ledErrorMessage = '';
 
   private readonly loginUrl =
-    'https://smarthome.aeropuertolosprimos.me/api/auth/login';
+    'https://prueba.aeropuertolosprimos.me/api/auth/login';
 
   private ledPolling?: Subscription;
 

@@ -28,7 +28,7 @@ export interface DiagnosticoApi {
 })
 export class DispositivoService {
   private readonly apiUrl =
-  'https://smarthome.aeropuertolosprimos.me/api/dispositivos';
+  'https://prueba.aeropuertolosprimos.me/api/dispositivos';
 
   private readonly timeoutMs = 8000;
 

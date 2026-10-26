@@ -1,11 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { interval, Subscription } from 'rxjs';
 
 import {
   DiagnosticoApi,
   Dispositivo,
   DispositivoService
 } from './services/dispositivo.service';
+
+import {
+  LedControlService,
+  LedStatus
+} from './services/led-control.service';
 
 interface LoginResponse {
   autenticado: boolean;
@@ -19,7 +26,7 @@ interface LoginResponse {
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   dispositivos: Dispositivo[] = [];
 
   nombre = '';
@@ -42,7 +49,6 @@ export class AppComponent implements OnInit {
   historialDiagnostico: DiagnosticoApi[] = [];
   mostrandoHistorial = false;
 
-  // Inicio de sesión
   autenticado = false;
   nombreUsuario = '';
   contrasena = '';
@@ -50,16 +56,30 @@ export class AppComponent implements OnInit {
   cargandoLogin = false;
   errorLogin = '';
 
+  // Control de los LED
+  ledStatus: LedStatus | null = null;
+  loadingLed1 = false;
+  loadingLed2 = false;
+  ledSuccessMessage = '';
+  ledErrorMessage = '';
+
   private readonly loginUrl =
     'https://smarthome.aeropuertolosprimos.me/api/auth/login';
 
+  private ledPolling?: Subscription;
+
   constructor(
     private dispositivoService: DispositivoService,
-    private http: HttpClient
+    private http: HttpClient,
+    private ledControlService: LedControlService
   ) {}
 
   ngOnInit(): void {
     // Los dispositivos se cargan después del inicio de sesión.
+  }
+
+  ngOnDestroy(): void {
+    this.detenerActualizacionLed();
   }
 
   iniciarSesion(): void {
@@ -70,8 +90,6 @@ export class AppComponent implements OnInit {
 
     this.cargandoLogin = true;
     this.errorLogin = '';
-
-    const inicio = Date.now();
 
     this.http.post<LoginResponse>(this.loginUrl, {
       nombre: this.nombreUsuario.trim(),
@@ -92,7 +110,10 @@ export class AppComponent implements OnInit {
 
         this.contrasena = '';
         this.errorLogin = '';
+
         this.listar();
+        this.actualizarEstadoLed();
+        this.iniciarActualizacionLed();
       },
       error: (err: HttpErrorResponse) => {
         this.cargandoLogin = false;
@@ -108,6 +129,8 @@ export class AppComponent implements OnInit {
   }
 
   cerrarSesion(): void {
+    this.detenerActualizacionLed();
+
     this.autenticado = false;
     this.nombreUsuario = '';
     this.contrasena = '';
@@ -122,6 +145,12 @@ export class AppComponent implements OnInit {
     this.estadoApi = 'sin-verificar';
     this.error = '';
     this.mensaje = '';
+
+    this.ledStatus = null;
+    this.ledSuccessMessage = '';
+    this.ledErrorMessage = '';
+    this.loadingLed1 = false;
+    this.loadingLed2 = false;
   }
 
   listar(): void {
@@ -158,8 +187,7 @@ export class AppComponent implements OnInit {
       next: datos => {
         this.dispositivos = datos;
         this.registrarExito('GET', url, inicio);
-        this.mensaje =
-          'Conexión con la API verificada correctamente.';
+        this.mensaje = 'Conexión con la API verificada correctamente.';
       },
       error: err => {
         this.registrarError(err, 'GET', url, inicio);
@@ -197,7 +225,6 @@ export class AppComponent implements OnInit {
 
         this.registrarExito('POST', url, inicio);
         this.mensaje = 'Dispositivo registrado correctamente.';
-
         this.listar();
       },
       error: err => {
@@ -206,7 +233,6 @@ export class AppComponent implements OnInit {
 
         this.error =
           'No se pudo registrar el dispositivo. Consulta el diagnóstico.';
-
         this.registrarError(err, 'POST', url, inicio);
       }
     });
@@ -235,18 +261,14 @@ export class AppComponent implements OnInit {
     ).subscribe({
       next: () => {
         this.operacionEnCurso = false;
-
         this.registrarExito('PUT', url, inicio);
         this.mensaje = `Estado actualizado a ${nuevoEstado}.`;
-
         this.listar();
       },
       error: err => {
         this.operacionEnCurso = false;
-
         this.error =
           'No se pudo actualizar el dispositivo. Consulta el diagnóstico.';
-
         this.registrarError(err, 'PUT', url, inicio);
       }
     });
@@ -271,21 +293,119 @@ export class AppComponent implements OnInit {
     this.dispositivoService.eliminar(id).subscribe({
       next: () => {
         this.operacionEnCurso = false;
-
         this.registrarExito('DELETE', url, inicio);
         this.mensaje = 'Dispositivo eliminado correctamente.';
-
         this.listar();
       },
       error: err => {
         this.operacionEnCurso = false;
-
         this.error =
           'No se pudo eliminar el dispositivo. Consulta el diagnóstico.';
-
         this.registrarError(err, 'DELETE', url, inicio);
       }
     });
+  }
+
+  // Consultar el estado de los LED
+  actualizarEstadoLed(): void {
+    if (!this.autenticado) {
+      return;
+    }
+
+    this.ledControlService.getStatus().subscribe({
+      next: status => {
+        this.ledStatus = status;
+        this.ledErrorMessage = '';
+      },
+      error: () => {
+        this.ledErrorMessage =
+          'No se pudo consultar el estado de los LED. Verifica el backend.';
+      }
+    });
+  }
+
+  private iniciarActualizacionLed(): void {
+    this.detenerActualizacionLed();
+
+    this.ledPolling = interval(2000).subscribe(() => {
+      this.actualizarEstadoLed();
+    });
+  }
+
+  private detenerActualizacionLed(): void {
+    this.ledPolling?.unsubscribe();
+    this.ledPolling = undefined;
+  }
+
+  turnOn(led: number): void {
+    this.ejecutarComandoLed(led, true);
+  }
+
+  turnOff(led: number): void {
+    this.ejecutarComandoLed(led, false);
+  }
+
+  isLedOn(led: number): boolean {
+    const estadoLed =
+      led === 1 ? this.ledStatus?.led1 : this.ledStatus?.led2;
+
+    return String(estadoLed ?? '').toUpperCase() === 'ON'
+      || String(estadoLed ?? '').toUpperCase() === 'ENCENDIDO';
+  }
+
+  private ejecutarComandoLed(
+    led: number,
+    encender: boolean
+  ): void {
+    if (led !== 1 && led !== 2) {
+      return;
+    }
+
+    this.ledSuccessMessage = '';
+    this.ledErrorMessage = '';
+
+    if (led === 1) {
+      this.loadingLed1 = true;
+    } else {
+      this.loadingLed2 = true;
+    }
+
+    const peticion = encender
+      ? this.ledControlService.turnOn(led)
+      : this.ledControlService.turnOff(led);
+
+    peticion.subscribe({
+      next: respuesta => {
+        if (respuesta.success) {
+          this.ledSuccessMessage =
+            respuesta.message ||
+            `LED ${led}: ${encender ? 'encendido' : 'apagado'}.`;
+
+          this.actualizarEstadoLed();
+        } else {
+          this.ledErrorMessage =
+            respuesta.message || 'El backend no confirmó la operación.';
+        }
+
+        this.finalizarCargaLed(led);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.ledErrorMessage =
+          err.status === 0
+            ? 'No se pudo conectar con el backend.'
+            : `Error al controlar el LED ${led} (HTTP ${err.status}).`;
+
+        this.finalizarCargaLed(led);
+      }
+    });
+  }
+
+  private finalizarCargaLed(led: number): void {
+    if (led === 1) {
+      this.loadingLed1 = false;
+    } else {
+      this.loadingLed2 = false;
+    }
   }
 
   alternarHistorial(): void {

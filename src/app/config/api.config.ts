@@ -9,7 +9,7 @@ export function getApiBaseUrl(): string {
 
   if (frontendLocalEnWindows) {
 
-    return 'https://prueba.aeropuertolosprimos.me/api';
+    return 'https://thehome.aeropuertolosprimos.me/api';
   }
 
   return '/api';

@@ -1,0 +1,33 @@
+<section class="panel users" aria-labelledby="users-title">
+  <p class="eyebrow">CUENTA</p>
+  <h2 id="users-title">Mi usuario</h2>
+  <p class="muted">Puedes actualizar tu propia cuenta. La administración de otras cuentas requiere permisos que el backend debe conceder explícitamente.</p>
+
+  <p *ngIf="cargando" class="muted">Consultando la cuenta autenticada…</p>
+  <p *ngIf="error" class="notice error" role="alert">{{ error }}</p>
+  <p *ngIf="mensaje" class="notice success" role="status">{{ mensaje }}</p>
+
+  <form *ngIf="cuenta" (ngSubmit)="guardar()">
+    <label for="user-name">Usuario</label>
+    <input id="user-name" name="nombre" [(ngModel)]="nombre" autocomplete="username" required maxlength="80">
+
+    <div class="credential">
+      <label><input type="checkbox" name="cambiarContrasena" [(ngModel)]="cambiarContrasena"> Cambiar contraseña de inicio de sesión</label>
+      <input *ngIf="cambiarContrasena" type="password" name="contrasena" [(ngModel)]="contrasena" autocomplete="new-password" placeholder="Nueva contraseña" required>
+    </div>
+
+    <div class="credential">
+      <label><input type="checkbox" name="cambiarPasswordpuerta" [(ngModel)]="cambiarPasswordpuerta"> Cambiar PIN de puerta</label>
+      <input *ngIf="cambiarPasswordpuerta" type="password" name="passwordpuerta" [(ngModel)]="passwordpuerta" autocomplete="new-password" inputmode="text" maxlength="4" pattern="[1-9A-D]{4}" placeholder="Cuatro caracteres" required>
+      <small>Configurado: {{ cuenta.passwordpuertaConfigurada ? 'Sí' : 'No' }} · formato 1–9 y A–D</small>
+    </div>
+
+    <div class="credential">
+      <label><input type="checkbox" name="cambiarPasswordapp" [(ngModel)]="cambiarPasswordapp"> Cambiar PIN de alarma</label>
+      <input *ngIf="cambiarPasswordapp" type="password" name="passwordapp" [(ngModel)]="passwordapp" autocomplete="new-password" maxlength="4" pattern="[1-9A-D]{4}" placeholder="Cuatro caracteres" required>
+      <small>Configurado: {{ cuenta.passwordappConfigurada ? 'Sí' : 'No' }} · independiente del PIN de puerta</small>
+    </div>
+
+    <button class="primary" type="submit" [disabled]="guardando">{{ guardando ? 'Guardando…' : 'Guardar cambios' }}</button>
+  </form>
+</section>

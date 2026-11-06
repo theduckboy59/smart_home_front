@@ -1,0 +1,37 @@
+<section class="security panel" aria-labelledby="security-title">
+  <div class="heading">
+    <div>
+      <p class="eyebrow">PROTECCIÓN PERIMÉTRICA</p>
+      <h2 id="security-title">Seguridad del hogar</h2>
+      <p class="muted">Estado y temporización confirmados por el servidor.</p>
+    </div>
+    <span class="badge" [class.online]="reciente">{{ reciente ? 'Sistema disponible' : 'Sin conexión' }}</span>
+  </div>
+
+  <p class="notice error" *ngIf="error" role="alert">{{ error }}</p>
+  <p class="notice" *ngIf="!error && !reciente">Sin lecturas de seguridad recientes. No se muestran estados anteriores como actuales.</p>
+
+  <ng-container *ngIf="reciente && estado as actual">
+    <div class="status-line" [class.alarm]="alarmaActiva">
+      <div><span class="muted">Estado</span><strong>{{ estadoLegible(actual.estado) }}</strong></div>
+      <strong class="seconds">{{ actual.tiempoPresenciaSegundos }} <small>s</small></strong>
+    </div>
+    <div class="timeline" role="progressbar" aria-label="Tiempo de presencia hasta la alarma" [attr.aria-valuenow]="actual.tiempoPresenciaSegundos" [attr.aria-valuemax]="actual.alarmaSegundo">
+      <span [style.width.%]="progreso"></span>
+    </div>
+    <div class="milestones"><span>0 s · Vigilancia</span><span>{{ actual.advertenciaSegundo }} s · Advertencia</span><span>{{ actual.alarmaSegundo }} s · Alarma</span></div>
+
+    <div class="metrics">
+      <article><span>Distancia</span><strong>{{ actual.distanciaCm === null ? 'Sin datos' : (actual.distanciaCm + ' cm') }}</strong></article>
+      <article><span>Umbral</span><strong>{{ actual.umbralCm }} cm</strong></article>
+      <article><span>Buzzer</span><strong>{{ actual.buzzerActivo ? 'Activo' : 'Inactivo' }}</strong></article>
+      <article><span>Puerta</span><strong>{{ actual.puertaBloqueada ? 'Bloqueada' : 'Disponible' }}</strong></article>
+      <article><span>ESP32</span><strong>{{ actual.esp32Online ? 'En línea' : 'Sin conexión' }}</strong></article>
+      <article><span>Arduino UNO</span><strong>{{ actual.arduinoOnline ? 'En línea' : 'Sin conexión' }}</strong></article>
+    </div>
+
+    <p class="muted small" *ngIf="actual.estado === 'ADVERTENCIA'">Advertencia de voz solicitada por el backend (pista 0003).</p>
+    <p class="muted small" *ngIf="actual.ultimaMedicionValida">Última medición válida: {{ actual.ultimaMedicionValida | date:'medium' }}</p>
+    <app-security-keypad *ngIf="actual.buzzerActivo" (resultadoConfirmado)="alConfirmar($event)"></app-security-keypad>
+  </ng-container>
+</section>

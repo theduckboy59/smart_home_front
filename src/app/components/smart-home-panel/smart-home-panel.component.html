@@ -1,0 +1,545 @@
+<section
+  class="panel"
+  aria-labelledby="home-title"
+>
+
+  <div class="heading">
+
+    <div>
+
+      <p class="eyebrow">
+        TU HOGAR · CONTROL LOCAL
+      </p>
+
+      <h2 id="home-title">
+        Todo, desde aquí
+      </h2>
+
+      <p class="muted">
+        Estados recibidos de tus Arduino.
+        Actualización cada segundo.
+      </p>
+
+    </div>
+
+
+    <span
+      class="badge"
+      [class.online]="fresh"
+    >
+      {{
+        fresh
+          ? 'En línea'
+          : 'Sin datos recientes'
+      }}
+    </span>
+
+  </div>
+
+
+  <div class="connections">
+
+    <span>
+
+      <i
+        [class.online]="
+          status?.mqttConnected
+        "
+      ></i>
+
+      Mosquitto
+
+      {{
+        status?.mqttConnected
+          ? 'conectado'
+          : 'sin conexión'
+      }}
+
+    </span>
+
+
+    <span>
+
+      <i
+        [class.online]="fresh"
+      ></i>
+
+      ESP32
+
+    </span>
+
+
+    <span>
+      <i [class.online]="!!uno1 || !!uno2"></i>
+      Arduino UNO físico
+      {{ uno1 || uno2 ? 'en línea' : 'sin conexión' }}
+    </span>
+
+  </div>
+
+
+  <p
+    class="notice error"
+    *ngIf="apiError"
+    role="alert"
+  >
+    {{ apiError }}
+  </p>
+
+
+  <p
+    class="notice"
+    *ngIf="
+      !apiError &&
+      !fresh
+    "
+  >
+    Esperando telemetría reciente.
+    Los estados anteriores no se muestran como actuales.
+  </p>
+
+
+  <div class="readings">
+
+    <article>
+
+      <span>
+        Temperatura
+      </span>
+
+      <strong>
+        <ng-container *ngIf="uno1?.temperatura != null; else noTemperature">
+          {{ uno1?.temperatura | number:'1.0-1' }}<small>°C</small>
+        </ng-container>
+        <ng-template #noTemperature>Sin datos</ng-template>
+
+      </strong>
+
+    </article>
+
+
+    <article>
+
+      <span>
+        Humedad
+      </span>
+
+      <strong>
+        <ng-container *ngIf="uno1?.humedad != null; else noHumidity">
+          {{ uno1?.humedad | number:'1.0-1' }}<small>%</small>
+        </ng-container>
+        <ng-template #noHumidity>Sin datos</ng-template>
+
+      </strong>
+
+    </article>
+
+
+  </div>
+
+
+  <p class="muted small">Las mediciones que el dispositivo no publica se muestran como “Sin datos”.</p>
+
+
+  <h3>
+    Iluminación
+  </h3>
+
+
+  <div class="rooms">
+
+    <article
+      class="room"
+      *ngFor="
+        let room of rooms
+      "
+      [class.lit]="
+        light(room.id) === 1
+      "
+    >
+
+      <div class="room-top">
+
+        <span
+          class="lamp"
+          aria-hidden="true"
+        >
+          ☀
+        </span>
+
+        <span class="badge">
+
+          {{
+            light(room.id) === 1
+
+              ? 'Encendida'
+
+              : light(room.id) === 0
+
+                ? 'Apagada'
+
+                : 'Sin datos'
+          }}
+
+        </span>
+
+      </div>
+
+
+      <h4>
+        {{ room.name }}
+      </h4>
+
+
+      <p class="muted small">
+        IR:
+        {{ ir(room.ir) }}
+      </p>
+
+
+      <div class="actions">
+
+        <button
+          type="button"
+          [disabled]="
+            !canControl(1) || !hasLight(room.id)
+          "
+          (click)="
+            command(
+              room.id,
+              'estado',
+              1
+            )
+          "
+        >
+          Encender
+        </button>
+
+
+        <button
+          type="button"
+          class="secondary"
+          [disabled]="
+            !canControl(1) || !hasLight(room.id)
+          "
+          (click)="
+            command(
+              room.id,
+              'estado',
+              0
+            )
+          "
+        >
+          Apagar
+        </button>
+
+      </div>
+
+    </article>
+
+  </div>
+
+
+  <div class="controls">
+
+    <article class="card fan">
+
+      <p class="eyebrow">
+        CLIMATIZACIÓN
+      </p>
+
+      <h3>
+        Ventilador
+      </h3>
+
+
+      <div class="mode">
+
+        <button
+          type="button"
+          [class.secondary]="fanManual"
+          [disabled]="!canControl(2) || fanValue === null"
+          (click)="
+            command(
+              'ventilador',
+              'modo',
+              'web'
+            )
+          "
+        >
+          Desde la web
+        </button>
+
+
+        <button
+          type="button"
+          [class.secondary]="
+            !fanManual
+          "
+          [disabled]="!canControl(2) || fanValue === null"
+          (click)="
+            command(
+              'ventilador',
+              'modo',
+              'manual'
+            )
+          "
+        >
+          Potenciómetro físico
+        </button>
+
+      </div>
+
+
+      <app-fan-dial
+        *ngIf="fanValue !== null; else noFanData"
+        [value]="fanValue"
+        [disabled]="!canControl(2) || fanManual"
+        (committed)="command('ventilador', 'velocidad', $event)"
+      ></app-fan-dial>
+
+      <ng-template #noFanData>
+        <p class="muted">Sin datos del ventilador</p>
+      </ng-template>
+
+
+      <p class="muted small">
+
+        {{
+          !uno2
+
+            ? 'Sin datos del ventilador'
+
+            : fanManual
+
+              ? 'Control desde el potenciómetro físico'
+
+              : 'Potencia solicitada · no es una lectura de RPM'
+        }}
+
+      </p>
+
+
+      <button
+        type="button"
+        class="secondary full"
+        [disabled]="
+          !canControl(2) || fanValue === null
+        "
+        (click)="
+          command(
+            'ventilador',
+            'estado',
+            0
+          )
+        "
+      >
+        Apagar ventilador
+      </button>
+
+
+      <p class="muted small">
+
+        A2:
+
+        {{
+          uno2?.potenciometro
+          ?? 'Sin datos'
+        }}
+
+        / 1023.
+
+        Sin potenciómetro conectado,
+        esta lectura no es válida.
+
+      </p>
+
+    </article>
+
+
+    <article class="card">
+
+      <p class="eyebrow">
+        ACCESO
+      </p>
+
+      <h3>
+        Puerta y alarma
+      </h3>
+
+
+      <div class="door-state">
+        <span class="muted">Puerta principal</span>
+        <strong>{{ doorValue === 1 ? 'Abierta' : doorValue === 0 ? 'Cerrada' : 'Sin datos' }}</strong>
+      </div>
+
+      <div class="door-details">
+        <p>Posición lógica: <strong>{{ doorValue === null ? 'Sin datos' : (doorValue === 1 ? '90°' : '0°') }}</strong></p>
+        <p>Retorno automático: <strong>5 s</strong></p>
+        <p>Dispositivo: <strong>{{ uno1 ? 'En línea' : 'Sin datos' }}</strong></p>
+        <p>Bloqueo: <strong>{{ uno1?.puerta?.bloqueada === true || alarmaValue === 1 ? 'Bloqueada' : doorValue === null ? 'Sin datos' : 'No bloqueada' }}</strong></p>
+      </div>
+
+      <p class="muted small">Última apertura confirmada: {{ lastDoorOpening ? (lastDoorOpening | date:'medium') : 'Sin datos' }}</p>
+      <p class="muted small">La apertura se autoriza con el teclado físico y el backend. El estado no sustituye un sensor de cierre.</p>
+
+
+      <hr />
+
+
+      <p>
+
+        Alarma:
+
+        <strong>
+
+          {{
+            alarmaValue === 1
+
+              ? 'Activada'
+
+              : alarmaValue === 0
+
+                ? 'Apagada'
+
+                : 'Sin datos'
+          }}
+
+        </strong>
+
+      </p>
+
+
+      <p class="muted small">La alarma se activa automáticamente por el sistema perimetral. Para desactivarla, usa el teclado virtual de la sección de seguridad.</p>
+
+    </article>
+
+
+    <article class="card">
+
+      <p class="eyebrow">
+        AUDIO
+      </p>
+
+      <h3>
+        DFPlayer Mini
+      </h3>
+
+
+      <p class="muted small">
+
+        Última pista registrada:
+
+        {{
+          uno2
+            ?.audio
+            ?.pista
+          ?? 'Sin datos'
+        }}.
+
+        Volumen registrado:
+
+        {{
+          uno2
+            ?.audio
+            ?.volumen
+          ?? 'Sin datos'
+        }}.
+
+      </p>
+
+
+      <p class="muted small">
+        La pista registrada no confirma que el altavoz esté produciendo sonido. Las pistas de puerta (0002) y advertencia (0003) las solicita el backend.
+      </p>
+
+
+      <hr />
+
+
+      <h4>
+        Teclado
+      </h4>
+
+
+      <p>
+
+        Última tecla recibida:
+
+        <strong class="key">
+
+          {{
+            status
+              ?.evento
+              ?.tecla
+            ?? '—'
+          }}
+
+        </strong>
+
+      </p>
+
+
+      <p class="muted small">
+
+        {{
+          status
+            ?.evento
+            ?.receivedAt
+
+            ? (
+              status
+                ?.evento
+                ?.receivedAt
+              | date:'mediumTime'
+            )
+
+            : 'Sin pulsaciones recibidas'
+        }}
+
+        · Aún no valida PIN ni abre la puerta.
+
+      </p>
+
+    </article>
+
+  </div>
+
+
+  <div
+    class="notice feedback"
+    role="status"
+    aria-live="polite"
+    *ngIf="feedback"
+    [class.success]="
+      result === 'aplicado'
+    "
+    [class.error]="
+      result === 'rechazado' ||
+      result === 'incierto'
+    "
+  >
+    {{ feedback }}
+  </div>
+
+
+  <p
+    class="muted small"
+    *ngIf="
+      status?.receivedAt
+    "
+  >
+
+    Última telemetría:
+
+    {{
+      status?.receivedAt
+      | date:'mediumTime'
+    }}.
+
+    Confirmar una orden no sustituye
+    comprobar el actuador físico.
+
+  </p>
+
+</section>

@@ -1,0 +1,29 @@
+<section class="panel history" aria-labelledby="history-title">
+  <div class="heading">
+    <div><p class="eyebrow">AUDITORÍA</p><h2 id="history-title">Historial de seguridad</h2></div>
+    <button type="button" class="secondary" (click)="cargar()" [disabled]="cargando">Actualizar</button>
+  </div>
+  <form class="filters" (ngSubmit)="aplicarFiltros()">
+    <label>Tipo de evento
+      <select name="tipo" [(ngModel)]="tipo">
+        <option value="">Todos</option><option value="ACCESO">Acceso</option><option value="VIGILANCIA">Vigilancia</option><option value="ADVERTENCIA">Advertencia</option><option value="ALARMA">Alarma</option><option value="REARME">Rearme</option><option value="COMUNICACION">Comunicación</option>
+      </select>
+    </label>
+    <label>Desde<input type="date" name="desde" [(ngModel)]="desde"></label>
+    <label>Hasta<input type="date" name="hasta" [(ngModel)]="hasta"></label>
+    <button type="submit">Filtrar</button>
+  </form>
+  <p *ngIf="cargando" class="muted">Cargando eventos…</p>
+  <p *ngIf="error" class="notice error" role="alert">{{ error }}</p>
+  <p *ngIf="!cargando && !error && !eventos.length" class="muted">No hay eventos para mostrar.</p>
+  <div class="table-wrap" *ngIf="eventos.length">
+    <table>
+      <thead><tr><th>Fecha</th><th>Evento</th><th>Resultado</th><th>Detalle</th></tr></thead>
+      <tbody><tr *ngFor="let evento of eventos"><td>{{ evento.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</td><td>{{ detalleSeguro(evento.tipo) }}</td><td>{{ detalleSeguro(evento.resultado) }}</td><td>{{ detalleSeguro(evento.detalle) }}</td></tr></tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    <span>{{ total }} eventos · Página {{ pagina + 1 }}</span>
+    <div><button type="button" class="secondary" (click)="anterior()" [disabled]="pagina === 0 || cargando">Anterior</button><button type="button" class="secondary" (click)="siguiente()" [disabled]="(pagina + 1) * tamano >= total || cargando">Siguiente</button></div>
+  </div>
+</section>

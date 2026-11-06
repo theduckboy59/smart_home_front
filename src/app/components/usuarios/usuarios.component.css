@@ -1,0 +1,17 @@
+:host { display: block; }
+.panel { margin-bottom: 22px; padding: 25px; border: 1px solid #e3e8f2; border-radius: 18px; background: #fff; box-shadow: 0 8px 28px #1e2d500d; }
+.eyebrow { margin: 0 0 8px; color: #5268c8; font-size: 10px; font-weight: 800; letter-spacing: 1.6px; }
+h2 { margin: 0; font-size: 23px; }
+.muted { color: #68748b; font-size: 13px; line-height: 1.55; }
+form { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 18px; }
+label { font-size: 13px; font-weight: 700; }
+input:not([type="checkbox"]) { width: 100%; min-height: 43px; padding: 10px 12px; border: 1px solid #d5ddec; border-radius: 8px; font: inherit; }
+.credential { display: grid; gap: 9px; margin: 7px 0; padding: 13px; border: 1px solid #e8edf5; border-radius: 10px; }
+.credential label { display: flex; align-items: center; gap: 9px; }
+.credential small { color: #68748b; }
+button { justify-self: start; min-height: 42px; padding: 10px 15px; border: 0; border-radius: 8px; background: #5268c8; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+.notice { padding: 12px; border-radius: 8px; font-size: 13px; }
+.notice.error { background: #fff1ed; color: #983b26; }
+.notice.success { background: #eaf8f0; color: #166d46; }
+@media (max-width: 600px) { .panel { padding: 18px; } }

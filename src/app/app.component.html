@@ -1,12 +1,30 @@
+<div
+  class="contenedor"
+  *ngIf="!autenticado"
+>
 
-<div class="contenedor" *ngIf="!autenticado">
   <section class="login panel">
-    <p class="eyebrow">SMART HOME</p>
-    <h1>Iniciar sesión</h1>
-    <p class="descripcion">Accede al panel de control de tu hogar.</p>
 
-    <form (ngSubmit)="iniciarSesion()">
-      <label for="usuario">Usuario</label>
+    <p class="eyebrow">
+      SMART HOME
+    </p>
+
+    <h1>
+      Iniciar sesión
+    </h1>
+
+    <p class="descripcion">
+      Accede al panel de control de tu hogar.
+    </p>
+
+    <form
+      (ngSubmit)="iniciarSesion()"
+    >
+
+      <label for="usuario">
+        Usuario
+      </label>
+
       <input
         id="usuario"
         name="nombreUsuario"
@@ -15,7 +33,10 @@
         required
       />
 
-      <label for="contrasena">Contraseña</label>
+      <label for="contrasena">
+        Contraseña
+      </label>
+
       <input
         id="contrasena"
         name="contrasena"
@@ -25,181 +46,280 @@
         required
       />
 
-      <p class="alerta error" *ngIf="errorLogin">
+      <p
+        class="alerta error"
+        *ngIf="errorLogin"
+      >
         {{ errorLogin }}
       </p>
 
-      <button class="boton principal" type="submit" [disabled]="cargandoLogin">
-        {{ cargandoLogin ? 'Validando...' : 'Entrar' }}
+      <button
+        class="boton principal"
+        type="submit"
+        [disabled]="cargandoLogin"
+      >
+        {{
+          cargandoLogin
+            ? 'Validando...'
+            : 'Entrar'
+        }}
       </button>
+
     </form>
+
   </section>
+
 </div>
 
-<main class="contenedor" *ngIf="autenticado">
+
+<main
+  class="contenedor"
+  *ngIf="autenticado"
+>
+
   <header class="encabezado">
+
     <div>
-      <p class="eyebrow">PANEL DE CONTROL</p>
-      <h1>Smart Home</h1>
-      <p class="descripcion">Sesión: {{ usuarioActual }}</p>
+
+      <p class="eyebrow">
+        PANEL DE CONTROL
+      </p>
+
+      <h1>
+        Smart Home
+      </h1>
+
+      <p class="descripcion">
+        Sesión: {{ usuarioActual }}
+      </p>
+
     </div>
 
-    <button class="boton boton-secundario" (click)="cerrarSesion()">
+    <button
+      class="boton boton-secundario"
+      type="button"
+      (click)="cerrarSesion()"
+    >
       Cerrar sesión
     </button>
+
   </header>
 
-  <p class="alerta error" *ngIf="error">{{ error }}</p>
-  <p class="alerta exito" *ngIf="mensaje">{{ mensaje }}</p>
 
-  <!-- Control físico de los LED -->
+  <p
+    class="alerta error"
+    *ngIf="error"
+  >
+    {{ error }}
+  </p>
+
+  <p
+    class="alerta exito"
+    *ngIf="mensaje"
+  >
+    {{ mensaje }}
+  </p>
+
+
+  <app-seguridad>
+  </app-seguridad>
+
+
+  <app-smart-home-panel>
+  </app-smart-home-panel>
+
+
+  <app-usuarios
+    [usuarioId]="usuarioId"
+    [nombreActual]="usuarioActual"
+  ></app-usuarios>
+
+
+  <app-historial-seguridad>
+  </app-historial-seguridad>
+
+
   <section class="panel">
+
     <div class="titulo-seccion">
+
       <div>
-        <p class="eyebrow">CONTROL FÍSICO</p>
-        <h2>Luces LED</h2>
-        <p class="descripcion">
-          Estado consultado al backend cada dos segundos.
+
+        <p class="eyebrow">
+          CONECTIVIDAD
         </p>
+
+        <h2>
+          Diagnóstico de API
+        </h2>
+
       </div>
 
       <span
         class="estado"
-        [class.encendido]="ledStatus?.mqttConnected === true">
-        {{ ledStatus?.mqttConnected ? 'MQTT conectado' : 'MQTT desconectado' }}
-      </span>
-    </div>
-
-    <div class="led-grid">
-      <article class="led-card">
-        <div class="led-icono" [class.luz-activa]="isLedOn(1)">●</div>
-        <h3>LED 1</h3>
-        <span class="estado" [class.encendido]="isLedOn(1)">
-          {{ ledStatus?.led1 || 'Sin datos' }}
-        </span>
-
-        <div class="acciones">
-          <button
-            class="boton principal"
-            (click)="turnOn(1)"
-            [disabled]="loadingLed1">
-            {{ loadingLed1 ? 'Enviando...' : 'Encender' }}
-          </button>
-
-          <button
-            class="boton boton-secundario"
-            (click)="turnOff(1)"
-            [disabled]="loadingLed1">
-            Apagar
-          </button>
-        </div>
-      </article>
-
-      <article class="led-card">
-        <div class="led-icono" [class.luz-activa]="isLedOn(2)">●</div>
-        <h3>LED 2</h3>
-        <span class="estado" [class.encendido]="isLedOn(2)">
-          {{ ledStatus?.led2 || 'Sin datos' }}
-        </span>
-
-        <div class="acciones">
-          <button
-            class="boton principal"
-            (click)="turnOn(2)"
-            [disabled]="loadingLed2">
-            {{ loadingLed2 ? 'Enviando...' : 'Encender' }}
-          </button>
-
-          <button
-            class="boton boton-secundario"
-            (click)="turnOff(2)"
-            [disabled]="loadingLed2">
-            Apagar
-          </button>
-        </div>
-      </article>
-    </div>
-
-    <p class="alerta exito" *ngIf="ledSuccessMessage">
-      {{ ledSuccessMessage }}
-    </p>
-    <p class="alerta error" *ngIf="ledErrorMessage">
-      {{ ledErrorMessage }}
-    </p>
-
-    <div class="datos-led" *ngIf="ledStatus">
-      <p><strong>Último mensaje MQTT:</strong> {{ ledStatus.lastMessage || 'Sin mensajes' }}</p>
-      <p><strong>Hora del último mensaje:</strong> {{ ledStatus.lastMessageTime || 'Sin datos' }}</p>
-    </div>
-
-    <button class="boton boton-secundario" (click)="actualizarEstadoLed()">
-      Actualizar estado
-    </button>
-  </section>
-
-  <!-- Diagnóstico de la API -->
-  <section class="panel">
-    <div class="titulo-seccion">
-      <div>
-        <p class="eyebrow">CONECTIVIDAD</p>
-        <h2>Diagnóstico de API</h2>
-      </div>
-
-      <span class="estado" [class.encendido]="estadoApi === 'disponible'">
+        [class.encendido]="
+          estadoApi === 'disponible'
+        "
+      >
         {{
-          estadoApi === 'verificando' ? 'Verificando' :
-          estadoApi === 'disponible' ? 'Disponible' :
-          estadoApi === 'error' ? 'Error' : 'Sin verificar'
+          estadoApi === 'verificando'
+            ? 'Verificando'
+            : estadoApi === 'disponible'
+              ? 'Disponible'
+              : estadoApi === 'error'
+                ? 'Error'
+                : 'Sin verificar'
         }}
       </span>
+
     </div>
+
 
     <button
       class="boton principal"
+      type="button"
       (click)="verificarConexion()"
-      [disabled]="estadoApi === 'verificando'">
+      [disabled]="
+        estadoApi === 'verificando'
+      "
+    >
       Verificar conexión
     </button>
 
-    <div *ngIf="diagnostico" class="diagnostico">
-      <h3>{{ diagnostico.tipo }}</h3>
-      <p>{{ diagnostico.mensaje }}</p>
-      <p><strong>Origen:</strong> {{ diagnostico.origen }}</p>
-      <p><strong>Método:</strong> {{ diagnostico.metodo }}</p>
-      <p><strong>URL:</strong> <code>{{ diagnostico.url }}</code></p>
-      <p><strong>HTTP:</strong> {{ diagnostico.codigoHttp ?? 'Sin respuesta' }}</p>
-      <p><strong>Duración:</strong> {{ diagnostico.duracionMs }} ms</p>
 
-      <div *ngIf="diagnostico.causas.length">
-        <strong>Causas posibles</strong>
+    <div
+      *ngIf="diagnostico"
+      class="diagnostico"
+    >
+
+      <h3>
+        {{ diagnostico.tipo }}
+      </h3>
+
+      <p>
+        {{ diagnostico.mensaje }}
+      </p>
+
+      <p>
+        <strong>Origen:</strong>
+        {{ diagnostico.origen }}
+      </p>
+
+      <p>
+        <strong>Método:</strong>
+        {{ diagnostico.metodo }}
+      </p>
+
+      <p>
+        <strong>URL:</strong>
+
+        <code>
+          {{ diagnostico.url }}
+        </code>
+      </p>
+
+      <p>
+        <strong>HTTP:</strong>
+
+        {{
+          diagnostico.codigoHttp
+          ?? 'Sin respuesta'
+        }}
+      </p>
+
+      <p>
+        <strong>Duración:</strong>
+        {{ diagnostico.duracionMs }} ms
+      </p>
+
+
+      <div
+        *ngIf="diagnostico.causas.length"
+      >
+
+        <strong>
+          Causas posibles
+        </strong>
+
         <ul>
-          <li *ngFor="let causa of diagnostico.causas">{{ causa }}</li>
+          <li
+            *ngFor="
+              let causa
+              of diagnostico.causas
+            "
+          >
+            {{ causa }}
+          </li>
         </ul>
+
       </div>
 
-      <div *ngIf="diagnostico.recomendaciones.length">
-        <strong>Recomendaciones</strong>
+
+      <div
+        *ngIf="
+          diagnostico.recomendaciones.length
+        "
+      >
+
+        <strong>
+          Recomendaciones
+        </strong>
+
         <ul>
-          <li *ngFor="let recomendacion of diagnostico.recomendaciones">
+          <li
+            *ngFor="
+              let recomendacion
+              of diagnostico.recomendaciones
+            "
+          >
             {{ recomendacion }}
           </li>
         </ul>
+
       </div>
 
+
       <details>
-        <summary>Detalle técnico</summary>
+
+        <summary>
+          Detalle técnico
+        </summary>
+
         <pre>{{ diagnostico.detalleTecnico }}</pre>
+
       </details>
+
     </div>
+
   </section>
 
-  <!-- Crear dispositivos -->
-  <section class="panel">
-    <p class="eyebrow">GESTIÓN</p>
-    <h2>Registrar dispositivo</h2>
 
-    <form (ngSubmit)="crear()">
-      <label for="nombreDispositivo">Nombre del dispositivo</label>
+  <section class="panel">
+
+    <p class="eyebrow">
+      GESTIÓN
+    </p>
+
+    <h2>
+      Registrar dispositivo
+    </h2>
+
+    <p class="descripcion">
+      Registro informativo.
+      Estos dispositivos no controlan
+      directamente los actuadores físicos.
+    </p>
+
+    <form
+      (ngSubmit)="crear()"
+    >
+
+      <label
+        for="nombreDispositivo"
+      >
+        Nombre del dispositivo
+      </label>
+
       <input
         id="nombreDispositivo"
         name="nombre"
@@ -208,122 +328,291 @@
         required
       />
 
-      <label for="estadoInicial">Estado inicial</label>
-      <select id="estadoInicial" name="estado" [(ngModel)]="estado">
-        <option value="APAGADO">Apagado</option>
-        <option value="ENCENDIDO">Encendido</option>
+      <label
+        for="estadoInicial"
+      >
+        Estado inicial
+      </label>
+
+      <select
+        id="estadoInicial"
+        name="estado"
+        [(ngModel)]="estado"
+      >
+
+        <option value="APAGADO">
+          Apagado
+        </option>
+
+        <option value="ENCENDIDO">
+          Encendido
+        </option>
+
       </select>
 
       <button
         class="boton principal"
         type="submit"
-        [disabled]="guardando">
-        {{ guardando ? 'Guardando...' : 'Registrar dispositivo' }}
+        [disabled]="guardando"
+      >
+        {{
+          guardando
+            ? 'Guardando...'
+            : 'Registrar dispositivo'
+        }}
       </button>
+
     </form>
+
   </section>
 
-  <!-- Lista de dispositivos -->
+
   <section class="panel">
+
     <div class="titulo-seccion">
+
       <div>
-        <p class="eyebrow">DISPOSITIVOS REGISTRADOS</p>
-        <h2>Mis dispositivos</h2>
+
+        <p class="eyebrow">
+          DISPOSITIVOS REGISTRADOS
+        </p>
+
+        <h2>
+          Mis dispositivos registrados
+        </h2>
+
+        <p class="descripcion">
+          Este registro es informativo
+          y no controla los componentes físicos.
+        </p>
+
       </div>
 
-      <button class="boton boton-secundario" (click)="listar()">
+      <button
+        class="boton boton-secundario"
+        type="button"
+        (click)="listar()"
+      >
         Actualizar lista
       </button>
+
     </div>
 
-    <p *ngIf="cargando">Cargando dispositivos...</p>
 
-    <p *ngIf="!cargando && dispositivos.length === 0" class="vacio">
+    <p *ngIf="cargando">
+      Cargando dispositivos...
+    </p>
+
+
+    <p
+      *ngIf="
+        !cargando &&
+        dispositivos.length === 0
+      "
+      class="vacio"
+    >
       No hay dispositivos registrados.
     </p>
 
+
     <article
       class="dispositivo"
-      *ngFor="let dispositivo of dispositivos; trackBy: trackById">
+      *ngFor="
+        let dispositivo
+        of dispositivos;
+        trackBy: trackById
+      "
+    >
 
       <div class="informacion">
-        <h3>{{ dispositivo.nombre }}</h3>
-        <p class="identificador">ID: {{ dispositivo.id }}</p>
+
+        <h3>
+          {{ dispositivo.nombre }}
+        </h3>
+
+        <p class="identificador">
+          ID: {{ dispositivo.id }}
+        </p>
+
         <span
           class="estado"
-          [class.encendido]="dispositivo.estado === 'ENCENDIDO'">
+          [class.encendido]="
+            dispositivo.estado === 'ENCENDIDO'
+          "
+        >
           {{ dispositivo.estado }}
         </span>
+
       </div>
 
+
       <div class="acciones">
+
         <button
           class="boton principal"
-          (click)="cambiarEstado(dispositivo)"
-          [disabled]="operacionEnCurso">
-          {{ dispositivo.estado === 'ENCENDIDO' ? 'Apagar' : 'Encender' }}
+          type="button"
+          (click)="
+            cambiarEstado(dispositivo)
+          "
+          [disabled]="operacionEnCurso"
+        >
+          {{
+            dispositivo.estado === 'ENCENDIDO'
+              ? 'Apagar'
+              : 'Encender'
+          }}
         </button>
+
 
         <button
           class="boton boton-peligro"
-          (click)="eliminar(dispositivo.id)"
-          [disabled]="operacionEnCurso">
+          type="button"
+          (click)="
+            eliminar(dispositivo.id)
+          "
+          [disabled]="operacionEnCurso"
+        >
           Eliminar
         </button>
+
       </div>
+
     </article>
+
   </section>
 
-  <!-- Historial -->
+
   <section class="panel">
+
     <div class="titulo-seccion">
+
       <div>
-        <p class="eyebrow">REGISTRO LOCAL</p>
-        <h2>Historial de diagnóstico</h2>
-        <p class="descripcion">Últimas 10 peticiones de esta sesión.</p>
+
+        <p class="eyebrow">
+          REGISTRO LOCAL
+        </p>
+
+        <h2>
+          Historial de diagnóstico
+        </h2>
+
+        <p class="descripcion">
+          Últimas 10 peticiones de esta sesión.
+        </p>
+
       </div>
 
+
       <div class="acciones">
-        <button class="boton boton-secundario" (click)="alternarHistorial()">
-          {{ mostrandoHistorial ? 'Ocultar' : 'Ver historial' }}
-        </button>
 
         <button
           class="boton boton-secundario"
+          type="button"
+          (click)="alternarHistorial()"
+        >
+          {{
+            mostrandoHistorial
+              ? 'Ocultar'
+              : 'Ver historial'
+          }}
+        </button>
+
+
+        <button
+          class="boton boton-secundario"
+          type="button"
           (click)="limpiarHistorial()"
-          [disabled]="historialDiagnostico.length === 0">
+          [disabled]="
+            historialDiagnostico.length === 0
+          "
+        >
           Limpiar
         </button>
+
       </div>
+
     </div>
 
-    <p *ngIf="historialDiagnostico.length === 0" class="vacio">
+
+    <p
+      *ngIf="
+        historialDiagnostico.length === 0
+      "
+      class="vacio"
+    >
       Todavía no hay peticiones registradas.
     </p>
 
-    <div class="historial" *ngIf="mostrandoHistorial">
-      <article class="evento-historial" *ngFor="let evento of historialDiagnostico">
+
+    <div
+      class="historial"
+      *ngIf="mostrandoHistorial"
+    >
+
+      <article
+        class="evento-historial"
+        *ngFor="
+          let evento
+          of historialDiagnostico
+        "
+      >
+
         <span
           class="estado-historial"
-          [class.estado-historial-error]="evento.estado === 'error'">
-          {{ evento.estado === 'disponible' ? 'OK' : 'ERROR' }}
+          [class.estado-historial-error]="
+            evento.estado === 'error'
+          "
+        >
+          {{
+            evento.estado === 'disponible'
+              ? 'OK'
+              : 'ERROR'
+          }}
         </span>
 
+
         <div class="evento-contenido">
-          <strong>{{ evento.tipo }}</strong>
+
+          <strong>
+            {{ evento.tipo }}
+          </strong>
+
           <span>
-            {{ evento.fecha | date:'dd/MM/yyyy HH:mm:ss' }}
+
+            {{
+              evento.fecha
+              | date:'dd/MM/yyyy HH:mm:ss'
+            }}
+
             · {{ evento.metodo }}
-            · {{ evento.codigoHttp === null ? 'Sin HTTP' : 'HTTP ' + evento.codigoHttp }}
+
+            ·
+            {{
+              evento.codigoHttp === null
+                ? 'Sin HTTP'
+                : 'HTTP ' + evento.codigoHttp
+            }}
+
             · {{ evento.duracionMs }} ms
+
           </span>
-          <code>{{ evento.url }}</code>
+
+          <code>
+            {{ evento.url }}
+          </code>
+
         </div>
+
       </article>
+
     </div>
+
   </section>
 
+
   <footer class="pie">
-    Smart Home · Control de dispositivos y diagnóstico HTTP
+    Smart Home · Control de dispositivos
+    y diagnóstico HTTP
   </footer>
+
 </main>

@@ -1,0 +1,85 @@
+:host {
+  display: block;
+  text-align: center;
+}
+
+.dial {
+  width: 210px;
+  max-width: 100%;
+  margin: auto;
+  position: relative;
+  touch-action: none;
+  cursor: grab;
+  border-radius: 50%;
+  outline-offset: 4px;
+  user-select: none;
+}
+
+.dial:active {
+  cursor: grabbing;
+}
+
+.dial:focus-visible {
+  outline: 3px solid #5067d8;
+}
+
+.dial.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+svg {
+  display: block;
+  width: 100%;
+}
+
+.track,
+.progress {
+  fill: none;
+  stroke-width: 10;
+}
+
+.track {
+  stroke: #e7edf8;
+  stroke-dasharray: 367.6 490;
+  transform: rotate(135deg);
+  transform-origin: center;
+}
+
+.progress {
+  stroke: #5268c8;
+  stroke-linecap: round;
+}
+
+.face {
+  fill: #f3f6fb;
+  stroke: #e3e8f2;
+}
+
+line {
+  stroke: #5268c8;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.number {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform:
+    translate(-50%, -50%);
+  font-size: 38px;
+  font-weight: 750;
+  pointer-events: none;
+}
+
+.number small {
+  font-size: 16px;
+  color: #68748b;
+}
+
+.hint {
+  margin: 0 0 12px;
+  color: #68748b;
+  font-size: 12px;
+}

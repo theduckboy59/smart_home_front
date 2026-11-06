@@ -1,0 +1,21 @@
+<section class="keypad" aria-labelledby="keypad-title">
+  <p class="eyebrow">CONFIRMACIÓN DE SEGURIDAD</p>
+  <h3 id="keypad-title">Desactivar alarma</h3>
+  <p class="muted">Introduce tu PIN de alarma. La entrada se transmite de forma protegida al servidor.</p>
+
+  <div class="dots" role="img" [attr.aria-label]="pin.length + ' de 4 caracteres ingresados'">
+    <span *ngFor="let dot of [0, 1, 2, 3]" [class.filled]="dot < pin.length">●</span>
+  </div>
+
+  <div class="keys" aria-label="Teclado de PIN">
+    <button *ngFor="let key of keys" type="button" [disabled]="estado === 'enviando'" (click)="agregar(key)" [attr.aria-label]="'Tecla ' + key">{{ key }}</button>
+    <button type="button" class="utility" [disabled]="estado === 'enviando' || !pin.length" (click)="borrar()" aria-label="Borrar último carácter">⌫</button>
+    <button type="button" class="utility clear" [disabled]="estado === 'enviando' || !pin.length" (click)="limpiar()">Limpiar</button>
+    <button type="button" [disabled]="estado === 'enviando'" (click)="agregar('D')" aria-label="Tecla D">D</button>
+  </div>
+
+  <button class="confirm" type="button" [disabled]="estado === 'enviando' || pin.length !== 4" (click)="confirmar()">
+    {{ estado === 'enviando' ? 'Validando…' : 'Confirmar PIN' }}
+  </button>
+  <p *ngIf="mensaje" class="feedback" [class.success]="estado === 'exito'" [class.error]="estado === 'error'" role="status" aria-live="polite">{{ mensaje }}</p>
+</section>
